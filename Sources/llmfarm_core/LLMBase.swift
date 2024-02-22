@@ -42,8 +42,8 @@ public class LLMBase {
     public var context: OpaquePointer?
     public var grammar: OpaquePointer?
     public var contextParams: ModelAndContextParams
-    public var sampleParams: ModelSampleParams = .default    
-    public var core_resourses = get_core_bundle_path()    
+    public var sampleParams: ModelSampleParams = .default
+    public var core_resourses = get_core_bundle_path()
     public var session_tokens: [Int32] = []
 
     
@@ -54,7 +54,7 @@ public class LLMBase {
     
     
     
-    public  init(path: String, contextParams: ModelAndContextParams = .default, 
+    public  init(path: String, contextParams: ModelAndContextParams = .default,
                  model_load_progress_callback:((Float)  -> (Bool))?) throws {
         self.contextParams = contextParams
         //        var params = gptneox_context_default_params()
@@ -110,6 +110,26 @@ public class LLMBase {
     
     deinit {
         
+    }
+    
+    public func get_gpu_layers() -> Int32 {
+        var n_gpu_layers: Int32 = 0
+        var hardware_arch = Get_Machine_Hardware_Name()// Disable Metal on intel Mac
+        if hardware_arch=="x86_64" {
+            n_gpu_layers = 0
+        } else {
+            if contextParams.use_metal{
+#if targetEnvironment(simulator)
+                n_gpu_layers = 0
+                print("Running on simulator, force use n_gpu_layers = 0")
+#else
+                n_gpu_layers = 100
+#endif
+            }else{
+                n_gpu_layers = 0
+            }
+        }
+        return n_gpu_layers
     }
     
     public func load_grammar(_ path:String) throws -> Void{
@@ -450,13 +470,13 @@ public class LLMBase {
 //    public func embeddings(_ input: String) throws -> [Float] {
 //        // Tokenize the prompt
 //        let inputs = llm_tokenize(input)
-//        
+//
 //        guard inputs.count > 0 else {
 //            return []
 //        }
-//        
+//
 //        _ = try llm_eval(inputBatch: inputs)
-//        
+//
 //        let embeddingsCount = Int(gpt_base_n_embd(context))
 //        guard let embeddings = gpt_base_get_embeddings(context) else {
 //            return []

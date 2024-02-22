@@ -20,19 +20,20 @@ public class LLaMa_dadbed9: LLMBase {
         params.vocab_only = contextParams.vocabOnly
         params.use_mlock = contextParams.useMlock
         params.embedding = contextParams.embedding
-        if contextParams.use_metal{
-            params.n_gpu_layers = 1
-        }
+//        if contextParams.use_metal{
+//            params.n_gpu_layers = 1
+//        }
         if !contextParams.useMMap{
             params.use_mmap = false
         }
         if contextParams.useMlock{
             params.use_mlock = true
         }
-        self.hardware_arch = Get_Machine_Hardware_Name()// Disable Metal on intel Mac
-        if self.hardware_arch=="x86_64"{
-            params.n_gpu_layers = 0
-        }
+//        self.hardware_arch = Get_Machine_Hardware_Name()// Disable Metal on intel Mac
+//        if self.hardware_arch=="x86_64"{
+//            params.n_gpu_layers = 0
+//        }
+        params.n_gpu_layers = get_gpu_layers()
         self.context = llama_dadbed9_init_from_file(path, params)
         if self.context == nil {
             return false

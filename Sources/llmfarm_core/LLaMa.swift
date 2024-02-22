@@ -40,15 +40,16 @@ public class LLaMa: LLMBase {
                 return true
         }
 
-        if contextParams.use_metal{
-            model_params.n_gpu_layers = 100
-        }else{
-            model_params.n_gpu_layers = 0
-        }
-        self.hardware_arch = Get_Machine_Hardware_Name()// Disable Metal on intel Mac
-        if self.hardware_arch=="x86_64"{
-            model_params.n_gpu_layers = 0
-        }
+//        if contextParams.use_metal{
+//            model_params.n_gpu_layers = 100
+//        }else{
+//            model_params.n_gpu_layers = 0
+//        }
+//        self.hardware_arch = Get_Machine_Hardware_Name()// Disable Metal on intel Mac
+//        if self.hardware_arch=="x86_64"{
+//            model_params.n_gpu_layers = 0
+//        }
+        model_params.n_gpu_layers = get_gpu_layers()
         
         if contextParams.lora_adapters.count>0{
             model_params.use_mmap = false

@@ -20,14 +20,14 @@ public class GPT2: LLMBase {
         context_params.vocab_only = contextParams.vocabOnly
         context_params.use_mlock = contextParams.useMlock
         context_params.use_mmap = contextParams.useMMap
-        var n_gpu_layers:Int32 = 0
-        if contextParams.use_metal{
-            n_gpu_layers = 1
-        }
-        self.hardware_arch = Get_Machine_Hardware_Name()// Disable Metal on intel Mac
-        if self.hardware_arch=="x86_64"{
-            n_gpu_layers = 0
-        }
+        var n_gpu_layers:Int32 = get_gpu_layers()
+//        if contextParams.use_metal{
+//            n_gpu_layers = 1
+//        }
+//        self.hardware_arch = Get_Machine_Hardware_Name()// Disable Metal on intel Mac
+//        if self.hardware_arch=="x86_64"{
+//            n_gpu_layers = 0
+//        }
 //TEMPORARY FIX
 //        n_gpu_layers = 0
 //        
