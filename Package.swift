@@ -10,6 +10,9 @@ let package = Package(
         .library(
             name: "llmfarm_core",
             targets: ["llmfarm_core"]),
+        .library(
+            name: "llmfarm_core_cpp",
+            targets: ["llmfarm_core_cpp"]),
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
@@ -34,6 +37,7 @@ let package = Package(
             ],
             publicHeadersPath: "spm-headers",
             cSettings: [
+                .headerSearchPath("spm-headers"),
                 .define("SWIFT_PACKAGE"),
                 .define("GGML_USE_ACCELERATE"),
                 .define("ACCELERATE_NEW_LAPACK"),
