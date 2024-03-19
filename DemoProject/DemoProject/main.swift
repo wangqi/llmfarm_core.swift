@@ -29,7 +29,7 @@ var params:ModelAndContextParams = .default
 params.promptFormat = .Custom
 params.custom_prompt_format = """
 SYSTEM: You are a helpful, respectful and honest assistant.
-USER: State the meaning of life
+USER: {prompt}
 ASSISTANT:
 """
 var input_text = "State the meaning of life"
@@ -39,7 +39,7 @@ params.use_metal = true
 //Uncomment this line to add lora adapter
 //params.lora_adapters.append(("lora-open-llama-3b-v2-q8_0-shakespeare-LATEST.bin",1.0 ))
 
-_ = try? ai.loadModel(ModelInference.LLama_gguf,contextParams: params)
+_ = try? ai.loadModel_sync(ModelInference.LLama_gguf,contextParams: params)
 // to use other inference like RWKV set ModelInference.RWKV
 // to use old ggjt_v3 llama models use ModelInference.LLama_bin
 
