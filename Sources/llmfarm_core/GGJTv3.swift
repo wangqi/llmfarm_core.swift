@@ -53,7 +53,7 @@ public class GPT2: LLMBase {
     
 }
 
-public class LLaMa_dadbed9: LLMBase {
+public class LLaMa_dadbed9_old: LLMBase {
 
     public var hardware_arch: String=""
     

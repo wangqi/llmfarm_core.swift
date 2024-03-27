@@ -72,4 +72,3 @@ let package = Package(
     cLanguageStandard: .c99,
     cxxLanguageStandard: .cxx20
 )
-

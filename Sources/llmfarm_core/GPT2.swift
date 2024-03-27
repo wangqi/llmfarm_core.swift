@@ -5,7 +5,7 @@
 import Foundation
 import llmfarm_core_cpp
 
-public class GPT2: LLMBase {
+public class GPT2_old: LLMBase {
     
     public var hardware_arch: String=""
 
