@@ -306,7 +306,8 @@ public class LLaMa: LLMBase {
         defer {
             result.deallocate()
         }
-        let nTokens = llama_token_to_piece(model, token, result, 8)
+//        llama_token_to_piece(const struct llama_model * model, llama_token token, char * buf, int32_t length, bool special)
+        let nTokens = llama_token_to_piece(model, token, result, 8,self.contextParams.parse_special_tokens)
         
         if nTokens < 0 {
             let newResult = UnsafeMutablePointer<Int8>.allocate(capacity: Int(-nTokens))
@@ -314,7 +315,7 @@ public class LLaMa: LLMBase {
             defer {
                 newResult.deallocate()
             }
-            let nNewTokens = llama_token_to_piece(model, token, newResult, -nTokens)
+            let nNewTokens = llama_token_to_piece(model, token, newResult, -nTokens,self.contextParams.parse_special_tokens)
             let bufferPointer = UnsafeBufferPointer(start: newResult, count: Int(nNewTokens))
             return Array(bufferPointer)
         } else {
@@ -383,7 +384,7 @@ public class LLaMa: LLMBase {
         }
         
         if self.contextParams.add_eos_token {
-            embeddings.append(llama_token_eos(self.context))
+            embeddings.append(llm_token_eos())
         }
         
         return embeddings
