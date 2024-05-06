@@ -349,6 +349,25 @@ public func get_model_context_param_by_config(_ model_config:Dictionary<String, 
             }
         }
     }
+    if (model_config["trim_words"] != nil){
+        let splited_trim_words = String(model_config["trim_words"]! as! String).components(separatedBy: [";"])
+        for word in splited_trim_words{
+            let trimed_word = word.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimed_word==""{
+                continue
+            }
+            var exist = false
+            for r_word in tmp_param.trim_words{
+                if r_word == trimed_word{
+                    exist = true
+                    break
+                }
+            }
+            if !exist{
+                tmp_param.trim_words.append(trimed_word)
+            }
+        }
+    }
 
     if (model_config["prompt_format"] != nil && model_config["prompt_format"]! as! String != "auto"
             && model_config["prompt_format"]! as! String != "{prompt}"){
@@ -436,6 +455,8 @@ public struct ModelAndContextParams {
     public var warm_prompt = "\n\n\n"
 
     public var reverse_prompt: [String] = []
+    
+    public var trim_words: [String] = []
     
     public var clip_model:String? = nil
 
