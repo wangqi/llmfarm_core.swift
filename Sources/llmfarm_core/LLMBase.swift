@@ -343,7 +343,7 @@ public class LLMBase {
             self.nPast += Int32(system_pormpt_Tokens.count)
         }
         if img_path != nil{
-            do {
+            do {  
                 try ExceptionCather.catchException {
                     _ = self.make_image_embed(img_path!)
                     _ = try? self.llm_eval_clip()
