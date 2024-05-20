@@ -203,23 +203,26 @@ public typealias ModelProgressCallback = (_ progress: Float, _ model: LLMBase) -
 
 func get_path_by_short_name(_ model_name:String?, dest:String = "lora_adapters") -> String? {
     //#if os(iOS) || os(watchOS) || os(tvOS)
-    if model_name == nil{
-        return nil
-    }
-    do {
-        let fileManager = FileManager.default
-        let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first
-        let destinationURL = documentsPath!.appendingPathComponent(dest)
-        try fileManager.createDirectory (at: destinationURL, withIntermediateDirectories: true, attributes: nil)
-        let path = destinationURL.appendingPathComponent(model_name!).path
-        if fileManager.fileExists(atPath: path){
-            return path
-        }else{
-            return nil
+    if let model_name = model_name {
+        do {
+            let fileManager = FileManager.default
+            let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first
+            let destinationURL = documentsPath!.appendingPathComponent(dest)
+            try fileManager.createDirectory (at: destinationURL, withIntermediateDirectories: true, attributes: nil)
+            let path = destinationURL.appendingPathComponent(model_name).path
+            if fileManager.fileExists(atPath: path){
+                return path
+            }else{
+                let path = Bundle.main.resourcePath!.appending("/\(dest)/\(model_name)")
+                if fileManager.fileExists(atPath: path) {
+                    return path
+                }
+                return nil
+            }
+            
+        } catch {
+            print(error)
         }
-        
-    } catch {
-        print(error)
     }
     return nil
 }
@@ -320,7 +323,7 @@ public func get_model_context_param_by_config(_ model_config:Dictionary<String, 
                     scale = adapter["scale"]! as? Float
                 }
                 if adapter_file != nil && scale != nil{
-                    let adapter_path = get_path_by_short_name(adapter_file!)
+                    let adapter_path = get_path_by_short_name(adapter_file!, dest: "lora_adapters")
                     if adapter_path != nil{
                         tmp_param.lora_adapters.append((adapter_path!,scale!))
                     }
@@ -329,7 +332,15 @@ public func get_model_context_param_by_config(_ model_config:Dictionary<String, 
         }            
     }
     if model_config["clip_model"] != nil {
-        tmp_param.clip_model = get_path_by_short_name(model_config["clip_model"]! as? String,dest:"models")
+        if let is_internal = model_config["is_internal"] {
+            if is_internal as! Bool {
+                tmp_param.clip_model = get_path_by_short_name(model_config["clip_model"]! as? String,dest:"data")
+            } else {
+                tmp_param.clip_model = get_path_by_short_name(model_config["clip_model"]! as? String,dest:"models")
+            }
+        } else {
+            tmp_param.clip_model = get_path_by_short_name(model_config["clip_model"]! as? String,dest:"models")
+        }
     }
     if (model_config["reverse_prompt"] != nil){
         let splited_revrse_prompt = String(model_config["reverse_prompt"]! as! String).components(separatedBy: [";"])
