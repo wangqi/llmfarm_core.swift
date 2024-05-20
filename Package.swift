@@ -9,6 +9,7 @@ let package = Package(
     products: [
         .library(
             name: "llmfarm_core",
+//            type: .dynamic,
             targets: ["llmfarm_core"]),
         .library(
             name: "llmfarm_core_cpp",

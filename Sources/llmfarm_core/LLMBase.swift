@@ -45,7 +45,12 @@ public class LLMBase {
     public var sampleParams: ModelSampleParams = .default
     public var core_resourses = get_core_bundle_path()
     public var session_tokens: [Int32] = []
-
+    public var modelLoadProgressCallback: ((Float)  -> (Bool))? = nil    
+    public var modelLoadCompleteCallback: ((String)  -> ())? = nil
+    public var evalCallback: ((Int)  -> (Bool))? = nil
+    public var evalDebugCallback: ((String)  -> (Bool))? = nil
+    public var modelPath: String
+    public var outputRepeatTokens: [ModelToken] = []
     
     // Used to keep old context until it needs to be rotated or purge out for new tokens
     var past: [[ModelToken]] = [] // Will house both queries and responses in order
@@ -54,10 +59,25 @@ public class LLMBase {
     
     
     
-    public  init(path: String, contextParams: ModelAndContextParams = .default,
-                 model_load_progress_callback:((Float)  -> (Bool))?) throws {
+    public  init(path: String, contextParams: ModelAndContextParams = .default) throws {
+        
+        self.modelPath = path
+//        self.modelLoadProgressCallback = model_load_progress_callback
         self.contextParams = contextParams
         //        var params = gptneox_context_default_params()
+        
+        // Check if model file exists
+        if !FileManager.default.fileExists(atPath: self.modelPath) {
+            throw ModelError.modelNotFound(self.modelPath)
+        }
+        // load_model()
+    }
+
+    public func load_model() throws {
+         // Load model at path
+        //        self.context = gptneox_init_from_file(path, params)
+        //        let test = test_fn()
+        var load_res:Bool? = false
         var params = gpt_context_default_params()
         params.n_ctx = contextParams.context
         params.n_parts = contextParams.parts
@@ -67,17 +87,9 @@ public class LLMBase {
         params.vocab_only = contextParams.vocabOnly
         params.use_mlock = contextParams.useMlock
         params.embedding = contextParams.embedding
-        // Check if model file exists
-        if !FileManager.default.fileExists(atPath: path) {
-            throw ModelError.modelNotFound(path)
-        }
-        // Load model at path
-        //        self.context = gptneox_init_from_file(path, params)
-        //        let test = test_fn()
-        var load_res:Bool? = false
         do{
             try ExceptionCather.catchException {
-                load_res = try? self.llm_load_model(path:path,contextParams:contextParams,params: params,model_load_progress_callback:model_load_progress_callback)
+                load_res = try? self.llm_load_model(path:self.modelPath,contextParams:contextParams,params: params)
             }
         
             if load_res != true{
@@ -86,8 +98,8 @@ public class LLMBase {
             
             print("%s: seed = %d\n", params.seed);
             
-            if contextParams.grammar_path != nil && contextParams.grammar_path! != ""{
-                try? self.load_grammar(contextParams.grammar_path!)
+            if self.contextParams.grammar_path != nil && self.contextParams.grammar_path! != ""{
+                try? self.load_grammar(self.contextParams.grammar_path!)
             }
             
             print(String(cString: print_system_info()))
@@ -102,6 +114,14 @@ public class LLMBase {
             print(error)
             throw error
         }
+    }
+    
+    public func load_clip_model() -> Bool{
+        return true
+    }
+    
+    public func deinit_clip_model(){
+        
     }
     
     public func destroy_objects(){
@@ -144,8 +164,10 @@ public class LLMBase {
         }
     }
     
-    public  func llm_load_model(path: String = "", contextParams: ModelAndContextParams = .default, params:gpt_context_params,
-                                model_load_progress_callback:((Float)  -> (Bool))? = {a in return true}) throws -> Bool{
+    public  func llm_load_model(path: String = "", 
+                                contextParams: ModelAndContextParams = .default,
+                                params:gpt_context_params) throws -> Bool
+    {
         return false
     }
     
@@ -281,6 +303,11 @@ public class LLMBase {
     }
     
     
+    public func load_state(){}
+    
+    public func save_state(){}
+    
+    
     public func llm_eval(inputBatch:[ModelToken]) throws -> Bool{
         return false
     }
@@ -328,9 +355,7 @@ public class LLMBase {
     }
     
     
-    
-    public func predict(_ input: String, _ callback: ((String, Double) -> Bool),system_prompt:String? = nil,img_path: String? = nil ) throws -> String {
-        let params = sampleParams
+    public func _eval_system_prompt(system_prompt:String? = nil) throws{
         if system_prompt != nil{
             var system_pormpt_Tokens = tokenizePrompt(system_prompt ?? "", .None)            
             var eval_res:Bool? = nil
@@ -342,17 +367,38 @@ public class LLMBase {
             }
             self.nPast += Int32(system_pormpt_Tokens.count)
         }
+    }
+
+    public func _eval_img(img_path:String? = nil) throws{
         if img_path != nil{
             do {  
                 try ExceptionCather.catchException {
+                    _ = self.load_clip_model()
                     _ = self.make_image_embed(img_path!)
                     _ = try? self.llm_eval_clip()
+                    self.deinit_clip_model()
                 }
              }catch{
                 print(error)
                 throw error
              }     
         }
+    }
+    
+    public func kv_shift() throws{
+        self.nPast = self.nPast / 2
+        try ExceptionCather.catchException {
+            _ = try? self.llm_eval(inputBatch: [self.llm_token_eos()])
+        }
+        print("Context Limit!")
+    }
+
+    public func predict(_ input: String, _ callback: ((String, Double) -> Bool),system_prompt:String? = nil,img_path: String? = nil ) throws -> String {
+        let params = sampleParams
+        
+        try _eval_system_prompt(system_prompt:system_prompt)
+        try _eval_img(img_path:img_path)
+        
         let contextLength = Int32(contextParams.context)
         print("Past token count: \(nPast)/\(contextLength) (\(past.count))")
         // Tokenize with prompt format
@@ -379,14 +425,11 @@ public class LLMBase {
                 // Move tokens to batch
                 let evalCount = min(inputTokens.count, Int(params.n_batch))
                 inputBatch.append(contentsOf: inputTokens[0 ..< evalCount])
-                
                 inputTokens.removeFirst(evalCount)
+
                 if self.nPast + Int32(inputBatch.count) >= self.contextParams.context{
-                    self.nPast = 0
-                    try ExceptionCather.catchException {
-                        _ = try? self.llm_eval(inputBatch: [self.llm_token_eos()])
-                    }
-//                    throw ModelError.contextLimit
+                    try self.kv_shift()
+                    callback("**C_LIMIT**",0)
                 }
                 var eval_res:Bool? = nil
                 try ExceptionCather.catchException {
@@ -398,7 +441,7 @@ public class LLMBase {
                 nPast += Int32(evalCount)
             }
             // Output
-            var outputRepeatTokens: [ModelToken] = []
+            outputRepeatTokens = []
             var outputTokens: [ModelToken] = []
             var output = [String]()
             // Loop until target count is reached
@@ -454,10 +497,8 @@ public class LLMBase {
                          return str
                      }
                      if callback(output, time) {
-//                    if callback(output, 0) {
                         // Early exit if requested by callback
                         print(" * exit requested by callback *")
-                        //generating = false
                         completion_loop = false //outputRemaining = 0
                         break
                     }
@@ -466,14 +507,9 @@ public class LLMBase {
                 if completion_loop {
                     // Send generated token back into model for next generation
                     var eval_res:Bool? = nil
-                    if self.nPast >= self.contextParams.context - 4{
-                        self.nPast = self.nPast / 2
-                        outputToken = self.llm_token_eos()
-                        try ExceptionCather.catchException {
-                            _ = try? self.llm_eval(inputBatch: [outputToken])
-                        }
-                        print("Context Limit!")
-//                        throw ModelError.contextLimit
+                    if self.nPast >= self.contextParams.context - 2{
+                        try self.kv_shift()
+                        callback("**C_LIMIT**",0)
                     }
                     try ExceptionCather.catchException {
                         eval_res = try? self.llm_eval(inputBatch: [outputToken])
