@@ -13,6 +13,7 @@ let package = Package(
             targets: ["llmfarm_core"]),
         .library(
             name: "llmfarm_core_cpp",
+//            type: .dynamic,
             targets: ["llmfarm_core_cpp"]),
     ],
     dependencies: [
