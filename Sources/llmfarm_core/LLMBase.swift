@@ -421,13 +421,19 @@ public class LLMBase {
     public func predict(_ input: String, _ callback: ((String, Double) -> Bool),system_prompt:String? = nil,img_path: String? = nil ) throws -> String {
         let params = sampleParams
         
-        try _eval_system_prompt(system_prompt:system_prompt)
+        //It has n_batch errors to eval system prompt
+//        try _eval_system_prompt(system_prompt:system_prompt)
         try _eval_img(img_path:img_path)
         
         let contextLength = Int32(contextParams.context)
         print("Past token count: \(nPast)/\(contextLength) (\(past.count))")
         // Tokenize with prompt format
-        var inputTokens = tokenizePrompt(input, self.contextParams.promptFormat)
+        var inputTokens: [ModelToken]
+        if let system_prompt = system_prompt {
+            inputTokens = tokenizePromptWithSystem(input, system_prompt, self.contextParams.promptFormat)
+        } else {
+            inputTokens = tokenizePrompt(input, self.contextParams.promptFormat)
+        }
         if inputTokens.count == 0{
             return "Empty input."
         }
@@ -609,6 +615,21 @@ public class LLMBase {
             var formated_input = self.contextParams.custom_prompt_format.replacingOccurrences(of: "{{prompt}}", with: input)
             formated_input = formated_input.replacingOccurrences(of: "{prompt}", with: input)
             formated_input = formated_input.replacingOccurrences(of: "\\n", with: "\n")
+            return llm_tokenize(formated_input)
+         }
+    }
+    
+    public func tokenizePromptWithSystem(_ input: String, _ systemPrompt: String, _ style: ModelPromptStyle) -> [ModelToken] {
+        switch style {
+        case .None:
+            return llm_tokenize(input)
+        case .Custom:
+            var formated_input = self.contextParams.custom_prompt_format.replacingOccurrences(of: "{{system_prompt}}", with: systemPrompt)
+            formated_input = formated_input.replacingOccurrences(of: "{system_prompt}", with: systemPrompt)
+            formated_input = formated_input.replacingOccurrences(of: "{{prompt}}", with: input)
+            formated_input = formated_input.replacingOccurrences(of: "{prompt}", with: input)
+            formated_input = formated_input.replacingOccurrences(of: "\\n", with: "\n")
+            print("Input text: \(formated_input)")
             return llm_tokenize(formated_input)
          }
     }

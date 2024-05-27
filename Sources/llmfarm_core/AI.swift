@@ -354,6 +354,11 @@ public func get_model_context_param_by_config(_ model_config:Dictionary<String, 
             (tmp_param.custom_prompt_format,tmp_param.system_prompt) = get_system_prompt(tmp_param.custom_prompt_format)
             tmp_param.promptFormat = .Custom
     }
+    if (model_config["system_prompt"] != nil && model_config["system_prompt"]! as! String != "" &&
+        (tmp_param.system_prompt.isEmpty)
+        ){
+        tmp_param.system_prompt = model_config["system_prompt"]! as! String
+    }
     
     if (model_config["use_metal"] != nil){
         tmp_param.use_metal = model_config["use_metal"] as! Bool
