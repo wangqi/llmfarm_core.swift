@@ -501,12 +501,12 @@ public struct ModelSampleParams {
     public var penalize_nl: Bool
     
     public static let `default` = ModelSampleParams(
-        n_batch: 512,
-        temp: 0.9,
+        n_batch: 5,
+        temp: 0.7,
         top_k: 40,
         top_p: 0.95,
         min_p: 0,
-        tfs_z: 1.0,
+        tfs_z: 0.9,
         typical_p: 1.0,
         repeat_penalty: 1.1,
         repeat_last_n: 64,
@@ -518,12 +518,12 @@ public struct ModelSampleParams {
         penalize_nl: true
     )
     
-    public init(n_batch: Int32 = 512,
-                temp: Float = 0.8,
+    public init(n_batch: Int32 = 5,
+                temp: Float = 0.9,
                 top_k: Int32 = 40,
                 top_p: Float = 0.95,
                 min_p: Float = 0.0,
-                tfs_z: Float = 1.0,
+                tfs_z: Float = 0.9,
                 typical_p: Float = 1.0,
                 repeat_penalty: Float = 1.1,
                 repeat_last_n: Int32 = 64,
@@ -533,7 +533,7 @@ public struct ModelSampleParams {
                 mirostat_tau: Float = 5.0,
                 mirostat_eta: Float = 0.1,
                 penalize_nl: Bool = true,
-                use_metal:Bool = false) {
+                use_metal:Bool = true) {
         self.n_batch = n_batch
         self.temp = temp
         self.top_k = top_k
