@@ -329,7 +329,7 @@ public func get_model_context_param_by_config(_ model_config:Dictionary<String, 
         tmp_param.skip_tokens_str = model_config["skip_tokens"]! as! String
     }
     if (model_config["trim_words"] != nil){
-        let splited_trim_words = String(model_config["trim_words"]! as! String).components(separatedBy: [";"])
+        let splited_trim_words = String(model_config["trim_words"]! as! String).components(separatedBy: [","])
         for word in splited_trim_words{
             let trimed_word = word.trimmingCharacters(in: .whitespacesAndNewlines)
             if trimed_word==""{
