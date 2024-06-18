@@ -227,7 +227,7 @@ public func get_model_sample_param_by_config(_ model_config:Dictionary<String, A
         tmp_param.mirostat_tau = Float(model_config["mirostat_tau"] as! Double)
     }
     if (model_config["mirostat_eta"] != nil){
-        tmp_param.mirostat_eta = Float(model_config["mirostat_tau"] as! Double)
+        tmp_param.mirostat_eta = Float(model_config["mirostat_eta"] as! Double)
     }
     
     return tmp_param
