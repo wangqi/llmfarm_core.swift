@@ -11,10 +11,10 @@ let package = Package(
             name: "llmfarm_core",
 //            type: .dynamic,
             targets: ["llmfarm_core"]),
-        .library(
-            name: "llmfarm_core_cpp",
-//            type: .dynamic,
-            targets: ["llmfarm_core_cpp"]),
+//        .library(
+//            name: "llmfarm_core_cpp",
+////            type: .dynamic,
+//            targets: ["llmfarm_core_cpp"]),
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
@@ -27,9 +27,9 @@ let package = Package(
         .target(
             name: "llmfarm_core_cpp",
             sources: ["ggml/ggml.c","exception_helper.cpp","ggml/ggml-quants.c","ggml/ggml-alloc.c","ggml/ggml-backend.c","ggml/ggml-metal.m",
-                      "ggml/common.cpp","ggml/sampling.cpp","ggml/train.cpp","ggml/build-info.cpp",
-                      "gpt_helpers.cpp","gpt_spm.cpp","package_helper.m","ggml/grammar-parser.cpp","exception_helper_objc.mm","ggml/common_old.cpp",
+                      "ggml/common.cpp","ggml/sampling.cpp","ggml/train.cpp","ggml/ggml-blas.cpp","ggml/build-info.cpp",
                       "llava/llava.cpp","llava/clip.cpp","llava/llava-cli.cpp","llama/unicode.cpp","llama/unicode-data.cpp","ggml/sgemm.cpp",
+                      "gpt_helpers.cpp","gpt_spm.cpp","package_helper.m","ggml/grammar-parser.cpp","exception_helper_objc.mm","ggml/common_old.cpp",
                       "ggml/json-schema-to-grammar.cpp","finetune/finetune.cpp","finetune/export-lora.cpp","llama/llama.cpp",
                       "ggml/ggml_d925ed.c","ggml/ggml_d925ed-alloc.c","ggml/ggml_d925ed-metal.m","rwkv/rwkv.cpp",
                       "ggml/ggml_dadbed9.c","ggml/k_quants_dadbed9.c","ggml/ggml-alloc_dadbed9.c","ggml/ggml-metal_dadbed9.m",
@@ -48,15 +48,24 @@ let package = Package(
                 .define("ACCELERATE_NEW_LAPACK"),
                 .define("ACCELERATE_LAPACK_ILP64"),
                 .define("GGML_USE_METAL"),
-                .define("GGML_METAL_NDEBUG", .when(configuration: .release)),
-                .define("NDEBUG", .when(configuration: .release)),
-                .unsafeFlags(["-Ofast"], .when(configuration: .release)), 
-                .unsafeFlags(["-O3"], .when(configuration: .debug)),
-                .unsafeFlags(["-mfma","-mfma","-mavx","-mavx2","-mf16c","-msse3","-mssse3"]), //for Intel CPU
+                .define("GGML_USE_BLAS"),
+//                .define("_DARWIN_C_SOURCE"),
+                .define("GGML_USE_LLAMAFILE"),
+                .define("GGML_METAL_NDEBUG"),
+                .define("NDEBUG"),
+//                .define("GGML_METAL_NDEBUG", .when(configuration: .release)),
+//                .define("NDEBUG", .when(configuration: .release)),
+//                .unsafeFlags(["-Ofast"], .when(configuration: .release)), 
+                .unsafeFlags(["-O3"]),
+//                .unsafeFlags(["-O3"], .when(configuration: .release)),
+                // .unsafeFlags(["-mfma","-mfma","-mavx","-mavx2","-mf16c","-msse3","-mssse3"]), //for Intel CPU
+                .unsafeFlags(["-march=native","-mtune=native"],.when(platforms: [.macOS])),
+//                .unsafeFlags(["-mcpu=apple-a14"],.when(platforms: [.iOS])),// use at your own risk, I've noticed more responsive work on 12 pro max
                 .unsafeFlags(["-pthread"]),
                 .unsafeFlags(["-fno-objc-arc"]),
+//                .unsafeFlags(["-fPIC"]),
                 .unsafeFlags(["-Wno-shorten-64-to-32"]),
-                .unsafeFlags(["-fno-finite-math-only"]),                                
+//                .unsafeFlags(["-fno-finite-math-only"], .when(configuration: .release)),
                 .unsafeFlags(["-w"]),    // ignore all warnings
 
                 
@@ -71,6 +80,6 @@ let package = Package(
         ),
         
     ],
-    cLanguageStandard: .c99,
-    cxxLanguageStandard: .cxx20
+    // cLanguageStandard: .c99,
+    cxxLanguageStandard: .cxx11
 )

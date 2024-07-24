@@ -55,7 +55,7 @@ public class LLMBase {
     // Used to keep old context until it needs to be rotated or purge out for new tokens
     var past: [[ModelToken]] = [] // Will house both queries and responses in order
     //var n_history: Int32 = 0
-    var nPast: Int32 = 0
+    public var nPast: Int32 = 0
     
     
     
@@ -344,7 +344,7 @@ public class LLMBase {
     
     public func _eval_system_prompt(system_prompt:String? = nil) throws{
         if system_prompt != nil{
-            var system_pormpt_Tokens = tokenizePrompt(system_prompt ?? "", .None)            
+            var system_pormpt_Tokens = try tokenizePrompt(system_prompt ?? "", .None)            
             var eval_res:Bool? = nil
             try ExceptionCather.catchException {
                 eval_res = try? self.llm_eval(inputBatch: &system_pormpt_Tokens)
@@ -417,27 +417,30 @@ public class LLMBase {
 
     public func predict(_ input: String, _ callback: ((String, Double) -> Bool),system_prompt:String? = nil,img_path: String? = nil ) throws -> String {
         //Eval system prompt then image if it's not nil
-        try _eval_system_prompt(system_prompt:system_prompt)
+        if self.nPast == 0{
+            try _eval_system_prompt(system_prompt:system_prompt)
+        }
         try _eval_img(img_path:img_path)
         
         let contextLength = Int32(contextParams.context)
         print("Past token count: \(nPast)/\(contextLength) (\(past.count))")
         // Tokenize with prompt format
-        var inputTokens = tokenizePrompt(input, self.contextParams.promptFormat)
-        if inputTokens.count == 0 && img_path == nil{
-            return "Empty input."
-        }
-        let inputTokensCount = inputTokens.count
-        print("Input tokens: \(inputTokens)")
-
-        if inputTokensCount > contextLength {
-            throw ModelError.inputTooLong
-        }
-
-        var inputBatch: [ModelToken] = []
         do {
-            //Batched Eval all input tokens 
-            try eval_input_tokens_batched(inputTokens: &inputTokens,callback:callback)
+            var inputTokens = try tokenizePrompt(input, self.contextParams.promptFormat)
+            if inputTokens.count == 0 && img_path == nil{
+                return "Empty input."
+            }
+            let inputTokensCount = inputTokens.count
+            print("Input tokens: \(inputTokens)")
+
+            if inputTokensCount > contextLength {
+                throw ModelError.inputTooLong
+            }
+
+            var inputBatch: [ModelToken] = []
+        
+            //Batched Eval all input tokens             
+            try eval_input_tokens_batched(inputTokens: &inputTokens,callback:callback)            
             // Output
             outputRepeatTokens = []
             var output = [String]()
@@ -684,7 +687,7 @@ public class LLMBase {
         return embeddings
     }
     
-    public func tokenizePrompt(_ input: String, _ style: ModelPromptStyle) -> [ModelToken] {
+    public func tokenizePrompt(_ input: String, _ style: ModelPromptStyle) throws -> [ModelToken] {
         switch style {
         case .None:
             return llm_tokenize(input)
@@ -692,7 +695,11 @@ public class LLMBase {
             var formated_input = self.contextParams.custom_prompt_format.replacingOccurrences(of: "{{prompt}}", with: input)
             formated_input = formated_input.replacingOccurrences(of: "{prompt}", with: input)
             formated_input = formated_input.replacingOccurrences(of: "\\n", with: "\n")
-            return llm_tokenize(formated_input)
+            var tokenized:[ModelToken] = []
+            try ExceptionCather.catchException {
+                tokenized = llm_tokenize(formated_input)
+            }
+            return tokenized
          }
     }
     
