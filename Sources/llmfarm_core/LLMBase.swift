@@ -426,7 +426,7 @@ public class LLMBase {
         print("Past token count: \(nPast)/\(contextLength) (\(past.count))")
         // Tokenize with prompt format
         do {
-            var inputTokens = try tokenizePrompt(input, self.contextParams.promptFormat)
+            var inputTokens = try tokenizePromptWithSystem(input, system_prompt ?? "", self.contextParams.promptFormat)
             if inputTokens.count == 0 && img_path == nil{
                 return "Empty input."
             }
@@ -703,18 +703,22 @@ public class LLMBase {
          }
     }
     
-    public func tokenizePromptWithSystem(_ input: String, _ systemPrompt: String, _ style: ModelPromptStyle) -> [ModelToken] {
+    public func tokenizePromptWithSystem(_ input: String, _ systemPrompt: String, _ style: ModelPromptStyle) throws -> [ModelToken] {
         switch style {
         case .None:
             return llm_tokenize(input)
         case .Custom:
-            var formated_input = self.contextParams.custom_prompt_format.replacingOccurrences(of: "{{system_prompt}}", with: systemPrompt)
-            formated_input = formated_input.replacingOccurrences(of: "{system_prompt}", with: systemPrompt)
+            var formated_input = self.contextParams.custom_prompt_format.replacingOccurrences(of: "{{system}}", with: systemPrompt)
+            formated_input = formated_input.replacingOccurrences(of: "{system}", with: systemPrompt)
             formated_input = formated_input.replacingOccurrences(of: "{{prompt}}", with: input)
             formated_input = formated_input.replacingOccurrences(of: "{prompt}", with: input)
             formated_input = formated_input.replacingOccurrences(of: "\\n", with: "\n")
-            print("Input text: \(formated_input)")
-            return llm_tokenize(formated_input)
+            print("LLMBase.tokenizePromptWithSystem: Input text '\(formated_input)'")
+            var tokenized:[ModelToken] = []
+            try ExceptionCather.catchException {
+                tokenized = llm_tokenize(formated_input)
+            }
+            return tokenized
          }
     }
     
