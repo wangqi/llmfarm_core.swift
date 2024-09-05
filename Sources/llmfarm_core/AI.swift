@@ -168,7 +168,8 @@ func get_path_by_short_name(_ model_name:String?, dest:String = "lora_adapters")
         do {
             let fileManager = FileManager.default
             let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first
-            let destinationURL = documentsPath!.appendingPathComponent(dest)
+            let rootDestinationURL = documentsPath!.appendingPathComponent(dest)
+            let destinationURL = get_destination_url(path_name: dest) ?? rootDestinationURL
             try fileManager.createDirectory (at: destinationURL, withIntermediateDirectories: true, attributes: nil)
             let path = destinationURL.appendingPathComponent(model_name).path
             if fileManager.fileExists(atPath: path){
@@ -186,6 +187,34 @@ func get_path_by_short_name(_ model_name:String?, dest:String = "lora_adapters")
         }
     }
     return nil
+}
+
+func get_destination_url(path_name: String) -> URL? {
+    let APPGROUP_ID = "group.com.acmeup.ios.aiassistant"
+    let fileManager = FileManager.default
+    
+    // Get the shared container URL for the App Group
+    var destinationURL: URL
+    if let containerURL = fileManager.containerURL(forSecurityApplicationGroupIdentifier: APPGROUP_ID) {
+        print("get_destination_url: Use App Group container \(APPGROUP_ID) directory ")
+        destinationURL = containerURL.appendingPathComponent(path_name)
+    } else {
+        let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first
+        print("get_destination_url: App Group container \(APPGROUP_ID) directory does not exist. Use app root \(String(describing: documentsPath))")
+        destinationURL = documentsPath!.appendingPathComponent(path_name)
+    }
+    
+    // Check if folder exists, create if not
+    if !fileManager.fileExists(atPath: destinationURL.path) {
+        do {
+            try fileManager.createDirectory(at: destinationURL, withIntermediateDirectories: true)
+        } catch {
+            print("Could not create directory: \(error)")
+            return nil
+        }
+    }
+    
+    return destinationURL
 }
 
 public func get_model_sample_param_by_config(_ model_config:Dictionary<String, AnyObject>) -> ModelSampleParams{
