@@ -18,13 +18,14 @@ var sources = [ "llama.cpp/ggml/src/ggml.c",
                 "llama.cpp/src/llama-vocab.cpp",
                 "llama.cpp/src/llama-sampling.cpp",
                 "llama.cpp/common/common.cpp",
+                "llama.cpp/common/arg.cpp",
                 // "llama.cpp/common/grammar-parser.cpp",
                 "llama.cpp/common/json-schema-to-grammar.cpp",
                 "llama.cpp/common/sampling.cpp",
                 // "llama.cpp/common/train.cpp",
                 "llama.cpp/examples/llava/llava.cpp",
                 "llama.cpp/examples/llava/clip.cpp",
-                "llama.cpp/examples/llava/llava-cli.cpp",
+                //"llama.cpp/examples/llava/llava-cli.cpp",
                 // "llama.cpp/examples/export-lora/export-lora.cpp",
                 "gpt_helpers.cpp",
                 "gpt_spm.cpp",
@@ -129,7 +130,6 @@ let package = Package(
         //     cSettings:cSettings,
         //     linkerSettings: linkerSettings
         // ),
-        
     ],
     // cLanguageStandard: .c99,
     cxxLanguageStandard: .cxx11
