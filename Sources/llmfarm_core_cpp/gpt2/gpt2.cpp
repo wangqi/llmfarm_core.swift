@@ -789,9 +789,9 @@ bool gpt2_eval(
     }
 
 #ifdef GGML_USE_METAL
-    if (ggml_backend_is_metal(model.backend)) {
-        ggml_backend_metal_set_n_cb(model.backend, n_threads);
-    }
+    //if (ggml_backend_is_metal(model.backend)) {
+    //    ggml_backend_metal_set_n_cb(model.backend, n_threads);
+    //}
 #endif
 
     // run the computation
