@@ -12,18 +12,14 @@ public enum ModelLoadError: Error {
 }
 
 
-// protocol LLMInference {
-//     func llm_sample() -> ModelToken
-// }
 
-
-public class LLMBase/*: LLMInference*/ {
+public class LLMBase {
     
     public var context: OpaquePointer?
     public var grammar: OpaquePointer?
     public var contextParams: ModelAndContextParams
-    public var sampleParams: ModelSampleParams = .default
-    public var core_resourses = get_core_bundle_path()
+    public var sampleParams: ModelSampleParams = .default    
+    public var core_resourses = get_core_bundle_path()    
     public var session_tokens: [Int32] = []
     public var modelLoadProgressCallback: ((Float)  -> (Bool))? = nil    
     public var modelLoadCompleteCallback: ((String)  -> ())? = nil
@@ -86,9 +82,6 @@ public class LLMBase/*: LLMInference*/ {
         }
     }
     
-
-
-    
     public func load_clip_model() -> Bool{
         return true
     }
@@ -103,26 +96,6 @@ public class LLMBase/*: LLMInference*/ {
     
     deinit {
         print("deinit LLMBase")
-    }
-    
-    public func get_gpu_layers() -> Int32 {
-        var n_gpu_layers: Int32 = 0
-        var hardware_arch = Get_Machine_Hardware_Name()// Disable Metal on intel Mac
-        if hardware_arch=="x86_64" {
-            n_gpu_layers = 0
-        } else {
-            if contextParams.use_metal{
-#if targetEnvironment(simulator)
-                n_gpu_layers = 0
-                print("Running on simulator, force use n_gpu_layers = 0")
-#else
-                n_gpu_layers = 100
-#endif
-            }else{
-                n_gpu_layers = 0
-            }
-        }
-        return n_gpu_layers
     }
     
     public func load_grammar(_ path:String) throws -> Void{
@@ -142,12 +115,6 @@ public class LLMBase/*: LLMInference*/ {
         return false
     }
     
-    public func llm_token_is_eog(token: ModelToken) -> Bool{
-        if token == llm_token_eos(){
-            return true
-        }
-        return false
-    }
     
     public func llm_token_nl() -> ModelToken{
         return 13
@@ -402,7 +369,7 @@ public class LLMBase/*: LLMInference*/ {
         print("Past token count: \(nPast)/\(contextLength) (\(past.count))")
         // Tokenize with prompt format
         do {
-            var inputTokens = try tokenizePromptWithSystem(input, system_prompt ?? "", self.contextParams.promptFormat)
+            var inputTokens = try tokenizePrompt(input, self.contextParams.promptFormat)
             if inputTokens.count == 0 && img_path == nil{
                 return "Empty input."
             }
@@ -422,7 +389,7 @@ public class LLMBase/*: LLMInference*/ {
             var output = [String]()
             // Loop until target count is reached
             var completion_loop = true
-            // let eos_token = llm_token_eos()
+            let eos_token = llm_token_eos()
             while completion_loop {
                 // Pull a generation from context
                 var outputToken:Int32 = -1
@@ -435,17 +402,11 @@ public class LLMBase/*: LLMInference*/ {
                     outputRepeatTokens.removeFirst()
                 }
                 // Check for eos - end early - check eos before bos in case they are the same
-                // if outputToken == eos_token {
-                //     completion_loop = false
-                //     print("[EOS]")
-                //     break
-                // }
-                if llm_token_is_eog(token:outputToken) {
-                    completion_loop = true
-                    print("[EOG]")
+                if outputToken == eos_token {
+                    completion_loop = false
+                    print("[EOS]")
                     break
                 }
-
                 // Check for BOS and tokens in skip list
                 var skipCallback = false
                 if !self.chekc_skip_tokens(outputToken){
@@ -501,6 +462,7 @@ public class LLMBase/*: LLMInference*/ {
         }
     }
 
+    
     public func llm_tokenize(_ input: String, add_bos: Bool? = nil, parse_special:Bool? = nil) -> [ModelToken] {
         return []
         // if input.count == 0 {
@@ -531,25 +493,6 @@ public class LLMBase/*: LLMInference*/ {
             var formated_input = self.contextParams.custom_prompt_format.replacingOccurrences(of: "{{prompt}}", with: input)
             formated_input = formated_input.replacingOccurrences(of: "{prompt}", with: input)
             formated_input = formated_input.replacingOccurrences(of: "\\n", with: "\n")
-            var tokenized:[ModelToken] = []
-            try ExceptionCather.catchException {
-                tokenized = llm_tokenize(formated_input)
-            }
-            return tokenized
-         }
-    }
-    
-    public func tokenizePromptWithSystem(_ input: String, _ systemPrompt: String, _ style: ModelPromptStyle) throws -> [ModelToken] {
-        switch style {
-        case .None:
-            return llm_tokenize(input)
-        case .Custom:
-            var formated_input = self.contextParams.custom_prompt_format.replacingOccurrences(of: "{{system}}", with: systemPrompt)
-            formated_input = formated_input.replacingOccurrences(of: "{system}", with: systemPrompt)
-            formated_input = formated_input.replacingOccurrences(of: "{{prompt}}", with: input)
-            formated_input = formated_input.replacingOccurrences(of: "{prompt}", with: input)
-            formated_input = formated_input.replacingOccurrences(of: "\\n", with: "\n")
-            print("LLMBase.tokenizePromptWithSystem: Input text '\(formated_input)'")
             var tokenized:[ModelToken] = []
             try ExceptionCather.catchException {
                 tokenized = llm_tokenize(formated_input)

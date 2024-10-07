@@ -18,31 +18,33 @@ var sources = [ "llama.cpp/ggml/src/ggml.c",
                 "llama.cpp/src/llama-vocab.cpp",
                 "llama.cpp/src/llama-sampling.cpp",
                 "llama.cpp/common/common.cpp",
-                "llama.cpp/common/arg.cpp",
                 "llama.cpp/common/log.cpp",
-                // "llama.cpp/common/grammar-parser.cpp",
+                "llama.cpp/common/arg.cpp",
                 "llama.cpp/common/json-schema-to-grammar.cpp",
                 "llama.cpp/common/sampling.cpp",
                 // "llama.cpp/common/train.cpp",
                 "llama.cpp/examples/llava/llava.cpp",
                 "llama.cpp/examples/llava/clip.cpp",
-                //"llama.cpp/examples/llava/llava-cli.cpp",
+                "llama.cpp/examples/llava/llava-cli.cpp",
                 // "llama.cpp/examples/export-lora/export-lora.cpp",
-                "gpt_helpers.cpp",
                 "gpt_spm.cpp",
                 "package_helper.m",
                 "exception_helper_objc.mm",
-                "exception_helper.cpp",
+                "exception_helper.cpp",                   
+                // "ggml_legacy/ggml_d925ed.c","ggml_legacy/ggml_d925ed-alloc.c","ggml_legacy/ggml_d925ed-metal.m","rwkv/rwkv.cpp",
+                // "ggml_legacy/ggml_dadbed9.c","ggml_legacy/k_quants_dadbed9.c","ggml_legacy/ggml-alloc_dadbed9.c","ggml_legacy/ggml-metal_dadbed9.m",
+                // "gptneox/gptneox.cpp","gpt2/gpt2.cpp","replit/replit.cpp","starcoder/starcoder.cpp","llama_legacy/llama_dadbed9.cpp",
+                // "ggml_legacy/common_old.cpp",      
+                // "ggml_legacy/build-info.cpp",          
+                // "finetune/finetune.cpp",                        
+                ]
+
+var sources_legacy = [ 
                 "ggml_legacy/ggml_d925ed.c","ggml_legacy/ggml_d925ed-alloc.c","ggml_legacy/ggml_d925ed-metal.m","rwkv/rwkv.cpp",
                 "ggml_legacy/ggml_dadbed9.c","ggml_legacy/k_quants_dadbed9.c","ggml_legacy/ggml-alloc_dadbed9.c","ggml_legacy/ggml-metal_dadbed9.m",
                 "gptneox/gptneox.cpp","gpt2/gpt2.cpp","replit/replit.cpp","starcoder/starcoder.cpp","llama_legacy/llama_dadbed9.cpp",
-                "ggml_legacy/common_old.cpp",
-                "ggml_legacy/build-info.cpp",
-                // "finetune/finetune.cpp",
-                ]
-
-var sources_legacy = [
-                "ggml/ggml_d925ed.c",
+                "ggml_legacy/common_old.cpp",      
+                "ggml_legacy/build-info.cpp",                                                  
                 ]
 
 var cSettings: [CSetting] =  [
@@ -58,17 +60,17 @@ var cSettings: [CSetting] =  [
                 .define("NDEBUG"),
 //                .define("GGML_METAL_NDEBUG", .when(configuration: .release)),
 //                .define("NDEBUG", .when(configuration: .release)),
-//                .unsafeFlags(["-Ofast"], .when(configuration: .release)),
-                .unsafeFlags(["-O3"]),
-//                .unsafeFlags(["-O3"], .when(configuration: .release)),
-                 .unsafeFlags(["-mfma","-mfma","-mavx","-mavx2","-mf16c","-msse3","-mssse3"]), //for Intel CPU
+                .unsafeFlags(["-Ofast"], .when(configuration: .release)),
+//                .unsafeFlags(["-O3"]),
+                .unsafeFlags(["-O3"], .when(configuration: .debug)),
+                .unsafeFlags(["-mfma","-mfma","-mavx","-mavx2","-mf16c","-msse3","-mssse3"]), //for Intel CPU
 //                .unsafeFlags(["-march=native","-mtune=native"],.when(platforms: [.macOS])),
 //                .unsafeFlags(["-mcpu=apple-a14"],.when(platforms: [.iOS])),// use at your own risk, I've noticed more responsive work on 12 pro max
                 .unsafeFlags(["-pthread"]),
                 .unsafeFlags(["-fno-objc-arc"]),
 //                .unsafeFlags(["-fPIC"]),
                 .unsafeFlags(["-Wno-shorten-64-to-32"]),
-//                .unsafeFlags(["-fno-finite-math-only"], .when(configuration: .release)),
+                .unsafeFlags(["-fno-finite-math-only"], .when(configuration: .release)),
                 .unsafeFlags(["-w"]),    // ignore all warnings
                 .headerSearchPath("llama.cpp/common"),
                 .headerSearchPath("llama.cpp/ggml/include"),
@@ -85,9 +87,9 @@ var linkerSettings: [LinkerSetting] = [
                 ]
 
 var resources: [Resource] = [
-                .copy("tokenizers"),
+                // .copy("tokenizers"),
                 .process("llama.cpp/ggml/src/ggml-metal.metal"),
-                .copy("metal")
+                // .copy("metal")
             ]
 
 let package = Package(
@@ -100,11 +102,9 @@ let package = Package(
             targets: ["llmfarm_core"]),
        .library(
            name: "llmfarm_core_cpp",
-//           type: .dynamic,
            targets: ["llmfarm_core_cpp"]),
     //    .library(
     //        name: "llmfarm_core_cpp_legacy",
-    //        type: .dynamic,
     //        targets: ["llmfarm_core_cpp_legacy"]),
     ],
     dependencies: [
