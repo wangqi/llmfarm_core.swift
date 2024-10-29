@@ -378,7 +378,7 @@ public class LLMBase/*: LLMInference*/ {
 
             if self.nPast + Int32(inputBatch.count) >= self.contextParams.context{
                 try self.kv_shift()
-                callback("**C_LIMIT**",0)
+                _ = callback(" `C_LIMIT` ",0)
             }
             var eval_res:Bool? = nil
             try ExceptionCather.catchException {
@@ -478,7 +478,7 @@ public class LLMBase/*: LLMInference*/ {
                     var eval_res:Bool? = nil
                     if self.nPast >= self.contextParams.context - 2{
                         try self.kv_shift()
-                        _ = callback("**C_LIMIT**",0)
+                        _ = callback(" `C_LIMIT` ",0)
                     }
                     try ExceptionCather.catchException {
                         inputBatch = [outputToken]
