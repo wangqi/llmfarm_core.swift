@@ -91,18 +91,16 @@ public class AI {
     public func loadModel() {
         aiQueue.async {
             do{
-                try ExceptionCather.catchException {
-                    try? self.model?.load_model()
-                }
+                try self.model?.load_model()
             }
             catch{
                 print(error)
                 DispatchQueue.main.async {
                     if self.model?.modelLoadCompleteCallback != nil{
-                        self.model?.modelLoadCompleteCallback!("[Error] \(error)")
-                        self.model?.modelLoadCompleteCallback!("[Error] \(error)")
+                        self.model?.modelLoadCompleteCallback!("[Error] \(error)")                        
                     }
                 }
+                return
             }
             DispatchQueue.main.async {
                 _ = self.model?.modelLoadProgressCallback?(1.0)
