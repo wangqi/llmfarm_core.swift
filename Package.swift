@@ -9,10 +9,17 @@ var sources = [ "llama.cpp/ggml/src/ggml.c",
                 "llama.cpp/ggml/src/ggml-quants.c",
                 "llama.cpp/ggml/src/ggml-alloc.c",
                 "llama.cpp/ggml/src/ggml-backend.cpp",
-                "llama.cpp/ggml/src/ggml-metal.m",
-                "llama.cpp/ggml/src/ggml-blas.cpp",
+                "llama.cpp/ggml/src/ggml-threading.cpp",
+                "llama.cpp/ggml/src/ggml-backend-reg.cpp",
+                "llama.cpp/ggml/src/ggml-metal/ggml-metal.m",
+                "llama.cpp/ggml/src/ggml-blas/ggml-blas.cpp",
                 "llama.cpp/ggml/src/ggml-aarch64.c",
-                "llama.cpp/ggml/src/llamafile/sgemm.cpp",
+                "llama.cpp/ggml/src/ggml-cpu/ggml-cpu-aarch64.c",
+                "llama.cpp/ggml/src/ggml-cpu/ggml-cpu.c",
+                "llama.cpp/ggml/src/ggml-cpu/ggml-cpu.cpp",
+                "llama.cpp/ggml/src/ggml-cpu/ggml-cpu-quants.c",
+                "llama.cpp/ggml/src/ggml-cpu/ggml-cpu-traits.cpp",
+                "llama.cpp/ggml/src/ggml-cpu/llamafile/sgemm.cpp",
                 "llama.cpp/src/llama.cpp",
                 "llama.cpp/src/unicode.cpp",
                 "llama.cpp/src/unicode-data.cpp",
@@ -52,6 +59,7 @@ var sources_legacy = [
 var cSettings: [CSetting] =  [
                 .define("SWIFT_PACKAGE"),
                 .define("GGML_USE_ACCELERATE"),
+                .define("GGML_BLAS_USE_ACCELERATE"),
                 .define("ACCELERATE_NEW_LAPACK"),
                 .define("ACCELERATE_LAPACK_ILP64"),
                 .define("GGML_USE_BLAS"),
@@ -59,7 +67,9 @@ var cSettings: [CSetting] =  [
                 .define("GGML_USE_LLAMAFILE"),
                 .define("GGML_METAL_NDEBUG"),
                 .define("NDEBUG"),
+                .define("GGML_USE_CPU"),
                 .define("GGML_USE_METAL"),
+                
 //                .define("GGML_METAL_NDEBUG", .when(configuration: .release)),
 //                .define("NDEBUG", .when(configuration: .release)),
                 .unsafeFlags(["-Ofast"], .when(configuration: .release)),
@@ -77,6 +87,7 @@ var cSettings: [CSetting] =  [
                 .headerSearchPath("llama.cpp/common"),
                 .headerSearchPath("llama.cpp/ggml/include"),
                 .headerSearchPath("llama.cpp/ggml/src"),
+                .headerSearchPath("llama.cpp/ggml/src/ggml-cpu"),
             ]
 
 
@@ -91,7 +102,7 @@ var linkerSettings: [LinkerSetting] = [
 
 var resources: [Resource] = [
                 // .copy("tokenizers"),
-                .process("llama.cpp/ggml/src/ggml-metal.metal"),
+                .process("llama.cpp/ggml/src/ggml-metal/ggml-metal.metal"),
                 // .copy("metal")
             ]
 
@@ -136,7 +147,8 @@ let package = Package(
         // ),
     ],
     // cLanguageStandard: .c99,
-    cxxLanguageStandard: .cxx11
+//    cxxLanguageStandard: .cxx11
+    cxxLanguageStandard: .cxx17
 )
 
 // c++ -std=c++11 -fPIC -O3 -Wall -Wextra -Wpedantic -Wcast-qual -Wno-unused-function -Wmissing-declarations -Wmissing-noreturn -pthread  -march=native -mtune=native -Wunreachable-code-break -Wunreachable-code-return -Wmissing-prototypes -Wextra-semi -Iggml/include -Iggml/src -Iinclude -Isrc -Icommon -D_XOPEN_SOURCE=600 -D_DARWIN_C_SOURCE -DNDEBUG -DGGML_USE_ACCELERATE -DGGML_USE_BLAS -DACCELERATE_NEW_LAPACK -DACCELERATE_LAPACK_ILP64 -DGGML_USE_LLAMAFILE -DGGML_USE_METAL -DGGML_METAL_EMBED_LIBRARY  -c src/llama.cpp -o src/llama.o

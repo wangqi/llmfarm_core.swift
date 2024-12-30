@@ -26,24 +26,25 @@ char const *LLAMA_BUILD_TARGET = "x86_64-apple-darwin23.5.0";
 const char * print_system_info(void) {
     static std::string s;
 
-    s  = "";
-    s += "AVX = "         + std::to_string(ggml_cpu_has_avx())         + " | ";
-    s += "AVX2 = "        + std::to_string(ggml_cpu_has_avx2())        + " | ";
-    s += "AVX512 = "      + std::to_string(ggml_cpu_has_avx512())      + " | ";
-    s += "AVX512_VBMI = " + std::to_string(ggml_cpu_has_avx512_vbmi()) + " | ";
-    s += "AVX512_VNNI = " + std::to_string(ggml_cpu_has_avx512_vnni()) + " | ";
-    s += "FMA = "         + std::to_string(ggml_cpu_has_fma())         + " | ";
-    s += "NEON = "        + std::to_string(ggml_cpu_has_neon())        + " | ";
-    s += "ARM_FMA = "     + std::to_string(ggml_cpu_has_arm_fma())     + " | ";
-    s += "F16C = "        + std::to_string(ggml_cpu_has_f16c())        + " | ";
-    s += "FP16_VA = "     + std::to_string(ggml_cpu_has_fp16_va())     + " | ";
-    s += "WASM_SIMD = "   + std::to_string(ggml_cpu_has_wasm_simd())   + " | ";
-    s += "BLAS = "        + std::to_string(ggml_cpu_has_blas())        + " | ";
-    s += "SSE3 = "        + std::to_string(ggml_cpu_has_sse3())        + " | ";
-    s += "SSSE3 = "       + std::to_string(ggml_cpu_has_ssse3())       + " | ";
-    s += "VSX = "         + std::to_string(ggml_cpu_has_vsx())         + " | ";
-
-    return s.c_str();
+//    s  = "";
+//    s += "AVX = "         + std::to_string(ggml_cpu_has_avx())         + " | ";
+//    s += "AVX2 = "        + std::to_string(ggml_cpu_has_avx2())        + " | ";
+//    s += "AVX512 = "      + std::to_string(ggml_cpu_has_avx512())      + " | ";
+//    s += "AVX512_VBMI = " + std::to_string(ggml_cpu_has_avx512_vbmi()) + " | ";
+//    s += "AVX512_VNNI = " + std::to_string(ggml_cpu_has_avx512_vnni()) + " | ";
+//    s += "FMA = "         + std::to_string(ggml_cpu_has_fma())         + " | ";
+//    s += "NEON = "        + std::to_string(ggml_cpu_has_neon())        + " | ";
+//    s += "ARM_FMA = "     + std::to_string(ggml_cpu_has_arm_fma())     + " | ";
+//    s += "F16C = "        + std::to_string(ggml_cpu_has_f16c())        + " | ";
+//    s += "FP16_VA = "     + std::to_string(ggml_cpu_has_fp16_va())     + " | ";
+//    s += "WASM_SIMD = "   + std::to_string(ggml_cpu_has_wasm_simd())   + " | ";
+//    s += "BLAS = "        + std::to_string(ggml_cpu_has_blas())        + " | ";
+//    s += "SSE3 = "        + std::to_string(ggml_cpu_has_sse3())        + " | ";
+//    s += "SSSE3 = "       + std::to_string(ggml_cpu_has_ssse3())       + " | ";
+//    s += "VSX = "         + std::to_string(ggml_cpu_has_vsx())         + " | ";
+//
+//    return s.c_str();
+    return llama_print_system_info();
 }
 
 // gpt_token gpt_base_token_bos(){
@@ -332,7 +333,7 @@ int check_tensor_name(struct ggml_tensor * t){
                                                 uint32_t    seed                  = LLAMA_DEFAULT_SEED,
                                                 const char * grammar_path = ""){
     // sparams
-    struct common_sampler_params  sparams;
+    struct common_params_sampling  sparams;
     sparams.n_prev = n_prev;
     sparams.top_k = top_k;
     sparams.top_p = top_p;              // 1.0 = disabled
@@ -350,6 +351,7 @@ int check_tensor_name(struct ggml_tensor * t){
     sparams.mirostat_tau   = mirostat_tau;           // target entropy
     sparams.mirostat_eta   = mirostat_eta;
     sparams.seed = seed;
+    sparams.no_perf = true;
     if (sparams.seed == 0)
         sparams.seed = LLAMA_DEFAULT_SEED;        
 
@@ -368,24 +370,20 @@ int check_tensor_name(struct ggml_tensor * t){
 }
 
 llama_token spm_llama_sampling_sample(
-        /*llama_sampling_context*/common_sampler * ctx_sampling,
+        common_sampler * ctx_sampling,
         struct llama_context * ctx_main,
-        // struct llama_context * ctx_cfg,
         int idx = -1,
         bool grammar_first = false)
 {
-
-    //    llama_sampling_sample(ctx_sampling,ctx_main,ctx_cfg,idx);
-    common_sampler_sample(ctx_sampling, ctx_main, idx, grammar_first);
+    return common_sampler_sample(ctx_sampling, ctx_main, idx, grammar_first);
 }
 
 void spm_llama_sampling_accept(
-        struct /*llama_sampling_context*/common_sampler * ctx_sampling,
+        struct common_sampler * ctx_sampling,
         struct llama_context * ctx_main,
         llama_token id,
         bool apply_grammar)
 {
-    // llama_sampling_accept(ctx_sampling,ctx_main,id,apply_grammar);
     common_sampler_accept(ctx_sampling, id, apply_grammar);
 }
 
