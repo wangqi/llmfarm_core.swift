@@ -420,6 +420,8 @@ public class LLMBase/*: LLMInference*/ {
             // Output
             outputRepeatTokens = []
             var output = [String]()
+            //The output_cache is used to cumulate the predicted string
+            var output_cache = [String]()
             // Loop until target count is reached
             var completion_loop = true
             // let eos_token = llm_token_eos()
@@ -454,22 +456,31 @@ public class LLMBase/*: LLMInference*/ {
                 }
                 // Convert token to string and callback             
                 if !skipCallback, let str = llm_token_to_str(outputToken: outputToken){
-                    output.append(str)
-                    // Per token callback
-                     let (output, time) = Utils.time {
-                         return str
-                     }
-                     if callback(output, time) {
-                        // Early exit if requested by callback
-                        print(" * exit requested by callback *")
-                        completion_loop = false 
-                        break
+                    //output.append(str)
+                    output_cache.append(str)
+                    if output_cache.count >= self.contextParams.predict_cache_length {
+                        let cached_content = output_cache.joined()
+                        output.append(contentsOf: output_cache)
+                        output_cache = []
+                        // Per token callback with accumulated cache
+                        let (_, time) = Utils.time {
+                            return cached_content
+                        }
+                        if callback(cached_content, time) {
+                            // Early exit if requested by callback
+                            print(" * exit requested by callback *")
+                            completion_loop = false
+                            break
+                        }
                     }
                 }
-                // Max output tokens count reached                
-                if (self.contextParams.n_predict != 0 && output.count>self.contextParams.n_predict){
+                // Max output tokens count reached
+                let output_count = output.count + output_cache.count
+                if (self.contextParams.n_predict != 0 && output_count>self.contextParams.n_predict){
                     print(" * n_predict reached *")
-                    completion_loop = false 
+                    completion_loop = false
+                    output.append(contentsOf: output_cache)
+                    output_cache = []
                     break
                 }
                 // Check if we need to run another response eval
@@ -490,6 +501,10 @@ public class LLMBase/*: LLMInference*/ {
                     }
                     nPast += 1
                 }
+            }
+            if output_cache.count > 0 {
+                output.append(contentsOf: output_cache)
+                output_cache = []
             }
             print("Total tokens: \(inputTokensCount + output.count) (\(inputTokensCount) -> \(output.count))")
             // print("Past token count: \(nPast)/\(contextLength) (\(past.count))")
@@ -574,5 +589,3 @@ public class LLMBase/*: LLMInference*/ {
         
     }
 }
-
-

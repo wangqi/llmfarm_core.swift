@@ -489,6 +489,10 @@ public struct ModelAndContextParams {
 
     public static let `default` = ModelAndContextParams()
     
+    //Only when reaching predict_cache_length, the predict function will update UI
+    //wangqi added predict_cache_length = 6
+    public var predict_cache_length:Int = 6
+    
     public init(    context: Int32 = 2048 /*512*/,
                     parts: Int32 = -1, 
                     seed: UInt32 = 0xFFFFFFFF, 
@@ -498,7 +502,8 @@ public struct ModelAndContextParams {
                     vocabOnly: Bool = false,
                     useMlock: Bool = false,
                     useMMap: Bool = true, 
-                    embedding: Bool = false) {
+                    embedding: Bool = false,
+                    predict_cache_length: Int = 6) {
         self.context = context
         self.parts = parts
         self.seed = seed
@@ -511,6 +516,7 @@ public struct ModelAndContextParams {
         self.useMlock = useMlock
         self.useMMap = useMMap
         self.embedding = embedding
+        self.predict_cache_length = predict_cache_length
     }
 }
 
