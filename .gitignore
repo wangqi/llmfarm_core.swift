@@ -93,3 +93,4 @@ iOSInjectionProject/
 Sources/llmfarm_core_cpp/patches/*
 patches_dev/*
 Sources/llmfarm_core_cpp_legacy/
+.vscode/
