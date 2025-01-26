@@ -22,8 +22,10 @@ func mainCallback(_ str: String, _ time: Double) -> Bool {
 
 
 //load model
-let ai = AI(_modelPath: "/Users/guinmoon/dev/alpaca_llama_etc/open_llama_3b_v2_Q8_0.gguf",_chatName: "chat")
-var params:ModelAndContextParams = .default
+let modelPath = "/Users/wangqi/disk/projects/ai/models/Dolphin3.0-Qwen2.5-3b-Q4_K_M.gguf"
+let ai = AI(_modelPath: modelPath,_chatName: "chat")
+print("Load model: \(modelPath)")
+var params: ModelAndContextParams = .default
 
 //set custom prompt format
 params.promptFormat = .Custom
@@ -33,14 +35,14 @@ USER: {prompt}
 ASSISTANT:
 """
 var input_text = "State the meaning of life"
-
 params.use_metal = true
+print("Model Params: \(params)")
 
 //Uncomment this line to add lora adapter
 //params.lora_adapters.append(("lora-open-llama-3b-v2-q8_0-shakespeare-LATEST.bin",1.0 ))
 
 //_ = try? ai.loadModel_sync(ModelInference.LLama_gguf,contextParams: params)
-ai.initModel(ModelInference.LLama_gguf,contextParams: params)
+ai.initModel(ModelInference.LLama_gguf, contextParams: params)
 if ai.model == nil{
     print( "Model load eror.")
     exit(2)

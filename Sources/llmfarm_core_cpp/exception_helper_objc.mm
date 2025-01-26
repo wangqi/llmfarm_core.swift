@@ -1,6 +1,6 @@
 //
 //  exc_helper_objc.m
-//  
+//
 //
 //  Created by guinmoon on 08.10.2023.
 //
@@ -48,4 +48,3 @@
 //     if (EXIT_SUCCESS != retVal) return nil;
 //     return [NSString stringWithUTF8String:sysinfo.machine];
 // }
-

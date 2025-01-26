@@ -6,12 +6,13 @@
 //
 
 import Foundation
+import llama
 
 // MARK: - Bridging to llama
 
 /// Print system info (wrapper for llama_print_system_info).
 /// This replicates the `print_system_info()` function.
-public func printSystemInfo() -> String {
+public func print_system_info() -> String {
     // llama_print_system_info() returns a C const char*
     guard let cStr = llama_print_system_info() else {
         return ""
@@ -19,11 +20,6 @@ public func printSystemInfo() -> String {
     return String(cString: cStr)
 }
 
-/// A Swift struct that mimics the original `callback_data` struct.
-public struct CallbackData {
-    public var data: [UInt8] = []
-    public init() {}
-}
 
 // MARK: - Sampler Setup (Replacing init_sampling & friends)
 
@@ -178,12 +174,12 @@ public func init_sampling(
 /// Swift version of `spm_llama_sampling_sample(...)`.
 /// We assume that `ctxSampling` is a chain sampler from `init_sampling(...)`.
 public func spm_llama_sampling_sample(
-    _ ctxSampling: SpmSamplerContext,
-    _ ctxMain: OpaquePointer?,    // llama_context*
+    ctxSampling: SpmSamplerContext?,
+    ctxMain: OpaquePointer?,    // llama_context*
     idx: Int32 = -1,
     grammarFirst: Bool = false
 ) -> llama_token {
-    guard let chain = ctxSampling.chain,
+    guard let chain = ctxSampling?.chain,
           let cMain = ctxMain else {
         return -1
     }
@@ -195,12 +191,12 @@ public func spm_llama_sampling_sample(
 /// Swift version of `spm_llama_sampling_accept(...)`.
 /// This calls `llama_sampler_accept(...)` on the chain to let it update internal state with the accepted token.
 public func spm_llama_sampling_accept(
-    _ ctxSampling: SpmSamplerContext,
-    _ ctxMain: OpaquePointer?,    // llama_context*
+    ctxSampling: SpmSamplerContext?,
+    ctxMain: OpaquePointer?,    // llama_context*
     token: llama_token,
     applyGrammar: Bool
 ) {
-    guard let chain = ctxSampling.chain else {
+    guard let chain = ctxSampling?.chain else {
         return
     }
     llama_sampler_accept(chain, token)
@@ -208,3 +204,34 @@ public func spm_llama_sampling_accept(
 }
 
 // End of GptSpm.swift
+
+// MARK: Original package_helper.m functions
+
+
+/// Returns the resource path of the SwiftPM module’s bundle.
+/// (Equivalent to `SWIFTPM_MODULE_BUNDLE.resourcePath`.)
+/*
+func get_core_bundle_path() -> String {
+    // If for some reason `resourcePath` is nil, we fall back to ""
+    return Bundle.module.resourcePath ?? ""
+}
+*/
+
+/// Returns the hardware machine name via the C `uname` call.
+/// (Equivalent to `[NSString stringWithUTF8String:sysinfo.machine]` in Objective-C.)
+func Get_Machine_Hardware_Name() -> String? {
+    var sysinfo = utsname()
+    // uname(...) returns 0 on success
+    guard uname(&sysinfo) == 0 else {
+        return nil
+    }
+    // Convert the machine field (CChar array) to a Swift string
+    let machineMirror = Mirror(reflecting: sysinfo.machine)
+    var machineString = ""
+    for child in machineMirror.children {
+        if let value = child.value as? Int8, value != 0 {
+            machineString.append(Character(UnicodeScalar(UInt8(value))))
+        }
+    }
+    return machineString
+}

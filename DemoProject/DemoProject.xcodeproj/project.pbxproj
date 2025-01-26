@@ -3,16 +3,17 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		151746DB2B6968EA0074FF35 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 151746DA2B6968EA0074FF35 /* main.swift */; };
-		151746E42B696A950074FF35 /* llmfarm_core in Frameworks */ = {isa = PBXBuildFile; productRef = 151746E32B696A950074FF35 /* llmfarm_core */; };
 		151746E62B696C080074FF35 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 151746E52B696C080074FF35 /* Accelerate.framework */; };
 		151746EA2B696C2A0074FF35 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 151746E72B696C2A0074FF35 /* Metal.framework */; };
 		151746EB2B696C2A0074FF35 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 151746E82B696C2A0074FF35 /* MetalKit.framework */; };
 		151746EC2B696C2A0074FF35 /* MetalPerformanceShaders.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 151746E92B696C2A0074FF35 /* MetalPerformanceShaders.framework */; };
+		3023D1212D46281200E8EB80 /* llama in Frameworks */ = {isa = PBXBuildFile; productRef = 3023D1202D46281200E8EB80 /* llama */; };
+		30F95B182D45DA7A0066A1B2 /* llmfarm_core in Frameworks */ = {isa = PBXBuildFile; productRef = 30F95B172D45DA7A0066A1B2 /* llmfarm_core */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -42,11 +43,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3023D1212D46281200E8EB80 /* llama in Frameworks */,
 				151746EC2B696C2A0074FF35 /* MetalPerformanceShaders.framework in Frameworks */,
-				151746E42B696A950074FF35 /* llmfarm_core in Frameworks */,
 				151746EB2B696C2A0074FF35 /* MetalKit.framework in Frameworks */,
 				151746EA2B696C2A0074FF35 /* Metal.framework in Frameworks */,
 				151746E62B696C080074FF35 /* Accelerate.framework in Frameworks */,
+				30F95B182D45DA7A0066A1B2 /* llmfarm_core in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -107,7 +109,8 @@
 			);
 			name = DemoProject;
 			packageProductDependencies = (
-				151746E32B696A950074FF35 /* llmfarm_core */,
+				30F95B172D45DA7A0066A1B2 /* llmfarm_core */,
+				3023D1202D46281200E8EB80 /* llama */,
 			);
 			productName = DemoProject;
 			productReference = 151746D72B6968EA0074FF35 /* DemoProject */;
@@ -137,6 +140,10 @@
 				Base,
 			);
 			mainGroup = 151746CE2B6968EA0074FF35;
+			packageReferences = (
+				30F95B142D45DA720066A1B2 /* XCLocalSwiftPackageReference "../../llmfarm_core.swift" */,
+				3023D11F2D46281200E8EB80 /* XCLocalSwiftPackageReference "../../llama.cpp" */,
+			);
 			productRefGroup = 151746D82B6968EA0074FF35 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -280,7 +287,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = C66ZA422A7;
+				DEVELOPMENT_TEAM = Y4G353X6Q5;
 				ENABLE_HARDENED_RUNTIME = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -291,7 +298,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = C66ZA422A7;
+				DEVELOPMENT_TEAM = Y4G353X6Q5;
 				ENABLE_HARDENED_RUNTIME = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -321,8 +328,23 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		3023D11F2D46281200E8EB80 /* XCLocalSwiftPackageReference "../../llama.cpp" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../llama.cpp;
+		};
+		30F95B142D45DA720066A1B2 /* XCLocalSwiftPackageReference "../../llmfarm_core.swift" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../llmfarm_core.swift;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
-		151746E32B696A950074FF35 /* llmfarm_core */ = {
+		3023D1202D46281200E8EB80 /* llama */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = llama;
+		};
+		30F95B172D45DA7A0066A1B2 /* llmfarm_core */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = llmfarm_core;
 		};

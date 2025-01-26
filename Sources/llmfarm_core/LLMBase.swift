@@ -3,6 +3,7 @@
 //  Created by Guinmoon.
 
 import Foundation
+import llama
 import llmfarm_core_cpp
 
 public enum ModelLoadError: Error {
@@ -11,19 +12,12 @@ public enum ModelLoadError: Error {
     case grammarLoadError
 }
 
-
-// protocol LLMInference {
-//     func llm_sample() -> ModelToken
-// }
-
-
 public class LLMBase/*: LLMInference*/ {
     
     public var context: OpaquePointer?
     public var grammar: OpaquePointer?
     public var contextParams: ModelAndContextParams
     public var sampleParams: ModelSampleParams = .default
-    public var core_resourses = get_core_bundle_path()
     public var session_tokens: [Int32] = []
     public var modelLoadProgressCallback: ((Float)  -> (Bool))? = nil    
     public var modelLoadCompleteCallback: ((String)  -> ())? = nil
@@ -38,23 +32,15 @@ public class LLMBase/*: LLMInference*/ {
     public var nPast: Int32 = 0
     
     
-    
-    public  init(path: String, contextParams: ModelAndContextParams = .default) throws {
-        
+    public init(path: String, contextParams: ModelAndContextParams = .default) throws {
         self.modelPath = path
-//        self.modelLoadProgressCallback = model_load_progress_callback
         self.contextParams = contextParams
-        //        var params = gptneox_context_default_params()
         
         // Check if model file exists
         if !FileManager.default.fileExists(atPath: self.modelPath) {
             throw ModelError.modelNotFound(self.modelPath)
         }
-        // load_model()
     }
-
-
-    
 
     public func load_model() throws {
         var load_res:Bool? = false
@@ -75,10 +61,7 @@ public class LLMBase/*: LLMInference*/ {
             try ExceptionCather.catchException {
                 _ = try? self.llm_init_logits()
             }
-    //        if exception != nil{
-    //            throw ModelError.failedToEval
-    //        }
-            
+
             print("Logits inited.")
         }catch {
             print(error)

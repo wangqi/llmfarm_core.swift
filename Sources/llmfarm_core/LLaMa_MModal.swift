@@ -3,6 +3,7 @@
 //  Created by Guinmoon.
 
 import Foundation
+import llama
 import llmfarm_core_cpp
 
 var LLaMaMM_obj:LLaMa_MModal? = nil

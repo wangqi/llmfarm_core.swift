@@ -3,41 +3,54 @@
 //  Created by Guinmoon.
 
 import Foundation
+import llama
 import llmfarm_core_cpp
 
-// var LLaMa_obj_ptr:UnsafeMutableRawPointer? = nil
 var LLaMa_obj:LLaMa? = nil
-//var LLaMa_ptr:UnsafeMutablePointer? = nil
 
 public class LLaMa: LLMBase {
     
     public var model: OpaquePointer?
-    public var ctx_sampling: OpaquePointer?
+    public var ctx_sampling: SpmSamplerContext?
     public var batch: llama_batch?
     public var hardware_arch: String=""
     public var temporary_invalid_cchars: [CChar]  = []
     
     public func init_sampling_param(){
-        self.ctx_sampling = init_sampling(model,
-                                          sampleParams.repeat_last_n,
-                                          sampleParams.top_k,
-                                          sampleParams.top_p,
-                                          sampleParams.min_p,
-                                          sampleParams.tfs_z,
-                                          sampleParams.typical_p,
-                                          sampleParams.temp,
-                                          0.0,
-                                          1.0,
-                                          sampleParams.repeat_last_n,
-                                          sampleParams.repeat_penalty,
-                                          sampleParams.frequence_penalty,
-                                          sampleParams.presence_penalty,
-                                          sampleParams.mirostat,
-                                          sampleParams.mirostat_tau,
-                                          sampleParams.mirostat_eta,
-                                          sampleParams.penalize_nl,
-                                          0 /*SEED*/,
-                                          self.contextParams.grammar_path ?? "");
+        // Create a new SpmSamplingParams instance
+        var spmParams = SpmSamplingParams()
+
+        // Map all your old parameters into the new struct
+        spmParams.penaltyLastN        = sampleParams.repeat_last_n
+        spmParams.topK                = sampleParams.top_k
+        spmParams.topP                = sampleParams.top_p
+        spmParams.minP                = sampleParams.min_p
+        // If tfs_z was effectively typical p (sometimes TFS is used in place of typicalP),
+        // set that here IF you no longer have a separate "tfs_z" in SpmSamplingParams.
+        spmParams.typicalP            = sampleParams.typical_p
+        spmParams.temp                = sampleParams.temp
+
+        // The old call was passing 0.0 for dynamic temperature range and 1.0 for exponent
+        spmParams.dynaTempRange       = 0.0
+        spmParams.dynaTempExponent    = 1.0
+
+        spmParams.penaltyRepeat       = sampleParams.repeat_penalty
+        spmParams.penaltyFreq         = sampleParams.frequence_penalty
+        spmParams.penaltyPresent      = sampleParams.presence_penalty
+        spmParams.mirostat            = sampleParams.mirostat
+        spmParams.mirostatTau         = sampleParams.mirostat_tau
+        spmParams.mirostatEta         = sampleParams.mirostat_eta
+        spmParams.penalizeNl          = sampleParams.penalize_nl
+
+        // If you want a specific seed, set it here.
+        // The old code was just passing 0, so:
+        spmParams.seed                = 0
+
+        // Grammar path
+        spmParams.grammarPath         = self.contextParams.grammar_path ?? ""
+
+        // Now call the updated function with the struct
+        self.ctx_sampling = init_sampling(model: model, params: spmParams)
     }
     
     public override func llm_load_model(path: String = "",contextParams: ModelAndContextParams = .default) throws -> Bool {
@@ -64,34 +77,10 @@ public class LLaMa: LLMBase {
             return true
         }
         
-        // context_params.cb_eval = { t, ask, user_data in
-        //     //    var  t:ggml_tensor? = a?.pointee
-        //     //    let t_name = String(cString:get_tensor_name(t))
-        //     if (LLaMa_obj?.evalCallback != nil){
-        //         //    let res = LLaMa_obj?.evalCallback!( Int(check_tensor_name(t)))
-        //         _ = LLaMa_obj?.evalCallback!( 0 )
-        //         return false
-        //     }
-        //     return false
-        // };
-        
-        /*
-        if contextParams.use_metal{
-            model_params.n_gpu_layers = 100
-        }else{
-            model_params.n_gpu_layers = 0
-        }
-        self.hardware_arch = Get_Machine_Hardware_Name()// Disable Metal on intel Mac
-        if self.hardware_arch=="x86_64"{
-            model_params.n_gpu_layers = 0
-        }
-         */
         model_params.n_gpu_layers = get_gpu_layers()
         
 #if targetEnvironment(simulator)
         model_params.n_gpu_layers = 0
-//        model_params.main_gpu = 0
-//        model_params.split_mode = LLAMA_SPLIT_MODE_NONE
         print("Running on simulator, force use n_gpu_layers = 0")
 #endif
         
@@ -107,22 +96,7 @@ public class LLaMa: LLMBase {
             return false
         }
         init_sampling_param()
-//         for lora in contextParams.lora_adapters{
-//             let adapter =  llama_lora_adapter_init(model, lora.0);
-//             if adapter != nil {
-//                 llama_lora_adapter_set(context, adapter, lora.1);
-//             }
-////             llama_model_apply_lora_from_file(model,lora.0,lora.1,nil,6);
-//         }
-        // float lora_scale = std::get<1>(params.lora_adapter[i]);
-        // auto adapter = llama_lora_adapter_init(model, lora_adapter.c_str());
-        // if (adapter == nullptr) {
-        //     fprintf(stderr, "%s: error: failed to apply lora adapter\n", __func__);
-        //     llama_free(lctx);
-        //     llama_free_model(model);
-        //     return std::make_tuple(nullptr, nullptr);
-        // }
-        // llama_lora_adapter_set(lctx, adapter, lora_scale);
+
         try ExceptionCather.catchException {
             self.context = llama_new_context_with_model(self.model, context_params)
         }
@@ -142,8 +116,8 @@ public class LLaMa: LLMBase {
     
     
     public override func llm_sample() -> ModelToken {
-        let id  = spm_llama_sampling_sample(self.ctx_sampling, self.context, /*nil,*/-1,false);
-        spm_llama_sampling_accept(self.ctx_sampling, self.context,  id, /* apply_grammar= */ true);
+        let id  = spm_llama_sampling_sample(ctxSampling: self.ctx_sampling, ctxMain: self.context, idx: -1, grammarFirst: false);
+        spm_llama_sampling_accept(ctxSampling: self.ctx_sampling, ctxMain: self.context, token: id, applyGrammar: true);
         return id;
     }
     
@@ -224,68 +198,14 @@ public class LLaMa: LLMBase {
         return true
     }
     
-    
-    //    if (llama_model_has_encoder(model)) {
-    //         int enc_input_size = embd_inp.size();
-    //         llama_token * enc_input_buf = embd_inp.data();
-    //
-    //         if (llama_encode(ctx, llama_batch_get_one(enc_input_buf, enc_input_size, 0, 0))) {
-    //             LOG_TEE("%s : failed to eval\n", __func__);
-    //             return 1;
-    //         }
-    //
-    //         llama_token decoder_start_token_id = llama_model_decoder_start_token(model);
-    //         if (decoder_start_token_id == -1) {
-    //             decoder_start_token_id = llama_token_bos(model);
-    //         }
-    //
-    //         embd_inp.clear();
-    //         embd_inp.push_back(decoder_start_token_id);
-    //     }
-    
-    // func llm_eval_ex(inputBatch: inout [ModelToken]) throws -> Bool {
-    //         if self.nPast==0{
-    //         completion_init(tokens_list:inputBatch)
-    //     }else{
-    //         llama_batch_clear(&batch!)
-    //         for i1 in 0..<inputBatch.count {
-    //             let i = Int(i1)
-    //             llama_batch_add(&batch!, inputBatch[i], Int32(i)+self.nPast, [0], true)
-    //         }
-    //         if llama_decode(context, batch!) != 0 {
-    //             print("failed to evaluate llama!")
-    //             return false
-    //         }
-    //     }
-    //     return true
-    // }
-    
-    // func completion_init(tokens_list: [ModelToken]) {
-    //     temporary_invalid_cchars = []
-    //     llama_batch_clear(&batch!)
-    //     for i1 in 0..<tokens_list.count {
-    //         let i = Int(i1)
-    //         llama_batch_add(&batch!, tokens_list[i], Int32(i), [0], false)
-    //     }
-    //     batch!.logits[Int(batch!.n_tokens) - 1] = 1
-    //     if llama_decode(context, batch!) != 0 {
-    //         print("llama_decode() failed")
-    //     }
-    // }
-    
+
     public override func kv_shift() throws{
         let n_discard = self.nPast/2
         llama_kv_cache_seq_rm (context, 0, self.sampleParams.repeat_last_n            , self.sampleParams.repeat_last_n + n_discard);
         llama_kv_cache_seq_add(context, 0,  self.sampleParams.repeat_last_n + n_discard, self.nPast, -n_discard);
-//        llama_kv_cache_seq_rm (ctx, 0, params.n_keep            , params.n_keep + n_discard);
-//        llama_kv_cache_seq_add(ctx, 0, params.n_keep + n_discard, n_past, -n_discard);
         self.nPast -= n_discard;
-//        try ExceptionCather.catchException {
-//            var in_batch = [self.llm_token_eos()]
-//            _ = try? self.llm_eval(inputBatch: &in_batch)
-//        }
+
         self.nPast+=1
-//        self.outputRepeatTokens = []
         print("Context Limit!")
     }
     
@@ -330,16 +250,12 @@ public class LLaMa: LLMBase {
         return SwiftString
     }
     
-    
-    
     private func token_to_piece(token: Int32) -> [CChar] {
         let result = UnsafeMutablePointer<Int8>.allocate(capacity: 8)
         result.initialize(repeating: Int8(0), count: 8)
         defer {
             result.deallocate()
         }
-        //        llama_token_to_piece(const struct llama_model * model, llama_token token, char * buf, int32_t length, bool special)
-        //        llama_token_to_piece(const struct llama_model * model,llama_token   token,char * buf,int32_t   length,int32_t   lstrip,bool   special);
         let nTokens = llama_token_to_piece(model, token, result, 8,0,/*true*/self.contextParams.parse_special_tokens)
         
         if nTokens < 0 {
@@ -358,10 +274,6 @@ public class LLaMa: LLMBase {
     }
     
     public override func llm_token_to_str(outputToken:Int32) -> String? {
-        //        if let cStr = llama_token_to_str(context, outputToken){
-        //            return String(cString: cStr)
-        //        }
-        //        return nil
         let new_token_cchars = token_to_piece(token: outputToken)
         temporary_invalid_cchars.append(contentsOf: new_token_cchars)
         let new_token_str: String
@@ -394,13 +306,6 @@ public class LLaMa: LLMBase {
     public override func llm_token_eos() -> ModelToken{
         return llama_token_eos(self.model)
     }
-    
-//    // if user stop generation mid-way, we must add EOT to finish model's last response
-//    if (need_insert_eot && format_chat) {
-//                           llama_token eot = llama_token_eot(model);
-//                           embd_inp.push_back(eot == -1 ? llama_token_eos(model) : eot);
-//                           need_insert_eot = false;
-//                       }
     
     public override func llm_tokenize(_ input: String, add_bos: Bool?, parse_special:Bool?) -> [ModelToken] {
         if input.count == 0 {

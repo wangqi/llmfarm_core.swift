@@ -3,6 +3,7 @@
 //  Created by Guinmoon.
 
 import Foundation
+import llama
 import llmfarm_core_cpp
 
 public enum ModelInference {

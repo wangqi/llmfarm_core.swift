@@ -4,7 +4,7 @@
 //
 
 import Foundation
-import llmfarm_core_cpp
+import llama
 
 public let default_thread_count:Int32 = Int32(ProcessInfo.processInfo.processorCount)
 

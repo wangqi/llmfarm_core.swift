@@ -5,7 +5,7 @@
 //
 
 import Foundation
-import llmfarm_core_cpp
+import llama
 
 var aaa = 1
 // var LLaMa_FineTune_obj_ptr:UnsafeMutableRawPointer? = nil
