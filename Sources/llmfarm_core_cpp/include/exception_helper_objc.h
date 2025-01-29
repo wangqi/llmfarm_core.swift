@@ -16,10 +16,4 @@
 + (BOOL)catchException:(noEscape void(^)(void))tryBlock error:(__autoreleasing NSError **)error;
 @end
 
-// NSString * get_core_bundle_path();
-
-// NSString * Get_Machine_Hardware_Name(void);
-
-// bool setSignalHandler();
-
 #endif /* exc_helper_objc */
